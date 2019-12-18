@@ -24,11 +24,41 @@
 <script>
 export default {
   name: "app",
-  data() {
+  data(vm) {
     return {
       display: "0",
       previousValue: null,
       currentOperator: "",
+      buttonClicks:{
+        number(button){
+          if (vm.previousValue === null) {
+            vm.previousValue = Number(vm.display);
+            vm.display = "";
+          }
+          if (button.text == "." && vm.display.includes(".")) return;
+          vm.display += button.text;
+          if(vm.display[0] == "0"){
+            vm.display = vm.display.slice(1);
+          }
+        },
+        operator(button){
+          if(vm.currentOperator){
+            vm.performOperation();
+          }
+          vm.previousValue = null;
+          vm.currentOperator = button.text;
+        },
+        special(button){
+          if (button.text == "AC") {
+            vm.display = "0";
+          } else if (button.text == "+/-") {
+            vm.display *= -1;
+          } else if (button.text == "=") {
+            vm.performOperation();
+            vm.currentOperator = "";
+          }
+        }
+      },
       operations: {
         "&#0247": (a, b) => a / b,
         x: (a, b) => a * b,
@@ -37,35 +67,35 @@ export default {
       },
       buttonRows: [
         [
-          { text: "AC", type: "operator" },
-          { text: "+/-", type: "operator" },
+          { text: "AC", type: "special" },
+          { text: "+/-", type: "special" },
           { text: "%", type: "operator" },
-          { text: "&#0247", type: "mainOperator" }
+          { text: "&#0247", type: "operator" }
         ],
         [
           { text: "7", type: "number" },
           { text: "8", type: "number" },
           { text: "9", type: "number" },
-          { text: "x", type: "mainOperator" }
+          { text: "x", type: "operator" }
         ],
         [
           { text: "4", type: "number" },
           { text: "5", type: "number" },
           { text: "6", type: "number" },
-          { text: "-", type: "mainOperator" }
+          { text: "-", type: "operator" }
         ],
         [
           { text: "1", type: "number" },
           { text: "2", type: "number" },
           { text: "3", type: "number" },
-          { text: "+", type: "mainOperator" }
+          { text: "+", type: "operator" }
         ],
         [
           { text: "0", type: "number" },
-          { text: ".", type: "operator", style: "flex-basis: calc(100%/2.32)" },
+          { text: ".", type: "number", style: "flex-basis: calc(100%/2.32)" },
           {
             text: "=",
-            type: "mainOperator",
+            type: "special",
             style: "flex-basis: calc(100%/2.2)"
           }
         ]
@@ -74,30 +104,11 @@ export default {
   },
   methods: {
     buttonClick(button) {
-      if (button.type == "number") {
-        if (this.display == "0") {
-          this.display = "";
-        }
-        if (this.previousValue === null) {
-          this.previousValue = Number(this.display);
-          this.display = "";
-        }
-        if (button.text == "." && this.display.includes(".")) {
-        }
-        this.display += button.text;
-      } else if (button.text == "AC") {
-        this.display = "0";
-      } else if (button.text == "+/-") {
-        this.display *= -1;
-      } else if (button.text == "=") {
-        this.display = this.operations[this.currentOperator](
-          +this.previousValue,
-          +this.display
-        );
-      } else if (button.type == "mainOperator") {
-        this.previousValue = null;
-        this.currentOperator = button.text;
-      }
+      const buttonFn = this.buttonClicks[button.type];
+      buttonFn(button);
+    },
+    performOperation(){
+        this.display = this.operations[this.currentOperator](+this.previousValue,+this.display)
     }
   }
 };
@@ -132,6 +143,7 @@ export default {
   width: 100%;
   padding: 0.4em;
   margin: 0.1em;
+  cursor: pointer;
 }
 .mainOperator {
   background-color: #bfd9f2;
